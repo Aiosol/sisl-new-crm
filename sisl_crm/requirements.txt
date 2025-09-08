@@ -1,0 +1,52 @@
+# requirements.txt - SISL CRM Project Dependencies
+
+# Django Core
+Django==4.2.0
+psycopg2-binary==2.9.9
+Pillow==10.1.0
+
+# Forms and UI
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-select2==8.1.2
+
+# API and REST
+djangorestframework==3.14.0
+django-cors-headers==4.3.0
+requests==2.31.0
+
+# Import/Export
+django-import-export==3.3.3
+openpyxl==3.1.2
+tablib==3.5.0
+
+# Environment and Config
+python-decouple==3.8
+
+# Database
+dj-database-url==2.1.0
+
+# Static Files (Production)
+whitenoise==6.6.0
+
+# Task Queue (Optional - for async tasks)
+# celery==5.3.4
+# redis==5.0.1
+
+# Testing
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# Development
+django-debug-toolbar==4.2.0
+ipython==8.18.1
+
+# Production Server
+gunicorn==21.2.0
+
+# Monitoring (Optional)
+# sentry-sdk==1.38.0
+
+# Documentation
+# sphinx==7.2.6
