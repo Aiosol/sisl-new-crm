@@ -1,0 +1,139 @@
+<!-- templates/crm/contacts/list.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contacts - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3">Contacts</h1>
+        <p class="text-muted">Total: {{ total_count }} contacts</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'crm:contact_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Contact
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Search by name, phone, email..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                {{ search_form.company }}
+            </div>
+            <div class="col-md-3">
+                {{ search_form.status }}
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contacts Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Company</th>
+                        <th>Designation</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'crm:contact_detail' contact.id %}">
+                                {{ contact.name }}
+                            </a>
+                        </td>
+                        <td>{{ contact.current_company|default:"-" }}</td>
+                        <td>{{ contact.designation|default:"-" }}</td>
+                        <td>{{ contact.phone }}</td>
+                        <td>{{ contact.email|default:"-" }}</td>
+                        <td>
+                            {% if contact.status %}
+                            <span class="badge" style="background-color: {{ contact.status.color }};">
+                                {{ contact.status.name }}
+                            </span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'crm:contact_update' contact.id %}" 
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'crm:lead_create' %}?contact={{ contact.id }}" 
+                                   class="btn btn-outline-success" title="Create Lead">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            No contacts found. <a href="{% url 'crm:contact_create' %}">Add your first contact</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

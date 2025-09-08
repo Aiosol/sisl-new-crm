@@ -1,0 +1,250 @@
+<!-- templates/crm/leads/form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Lead - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3">{% if object %}Edit Lead{% else %}New Lead{% endif %}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'crm:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'crm:lead_list' %}">Leads</a></li>
+                <li class="breadcrumb-item active">{% if object %}Edit{% else %}New{% endif %}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<form method="post" id="leadForm">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Lead Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.title|as_crispy_field }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.contact|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.company|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.source|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.status|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Value & Dates -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Value & Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.estimated_value|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.probability|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.expected_close_date|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.expected_delivery_date|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.rate_type|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.delivery_type|as_crispy_field }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Products -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Products</h5>
+                    <button type="button" class="btn btn-sm btn-success" id="addProduct">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                </div>
+                <div class="card-body">
+                    {{ product_formset.management_form }}
+                    <div id="product-formset">
+                        {% for form in product_formset %}
+                        <div class="product-form border rounded p-3 mb-3">
+                            {{ form.id }}
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    {{ form.product|as_crispy_field }}
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    {{ form.quantity|as_crispy_field }}
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    {{ form.unit_price|as_crispy_field }}
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button type="button" class="btn btn-sm btn-danger remove-product">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    {{ form.custom_description|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    {{ form.notes|as_crispy_field }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Actions</h6>
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-save"></i> Save Lead
+                    </button>
+                    <a href="{% if object %}{% url 'crm:lead_detail' object.id %}{% else %}{% url 'crm:lead_list' %}{% endif %}" 
+                       class="btn btn-secondary w-100">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Assignment -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Assignment</h5>
+                </div>
+                <div class="card-body">
+                    {{ form.owner|as_crispy_field }}
+                    {{ form.collaborators|as_crispy_field }}
+                </div>
+            </div>
+            
+            <!-- Weighted Value Calculator -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Weighted Value</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">
+                        <strong>Estimated:</strong> <span id="estimatedDisplay">৳ 0</span><br>
+                        <strong>Probability:</strong> <span id="probabilityDisplay">0%</span><br>
+                        <hr>
+                        <strong>Weighted:</strong> <span id="weightedDisplay">৳ 0</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Weighted value calculator
+    const estimatedInput = document.querySelector('[name="estimated_value"]');
+    const probabilityInput = document.querySelector('[name="probability"]');
+    
+    function updateWeightedValue() {
+        const estimated = parseFloat(estimatedInput.value) || 0;
+        const probability = parseFloat(probabilityInput.value) || 0;
+        const weighted = (estimated * probability) / 100;
+        
+        document.getElementById('estimatedDisplay').textContent = `৳ ${estimated.toLocaleString()}`;
+        document.getElementById('probabilityDisplay').textContent = `${probability}%`;
+        document.getElementById('weightedDisplay').textContent = `৳ ${weighted.toLocaleString()}`;
+    }
+    
+    estimatedInput.addEventListener('input', updateWeightedValue);
+    probabilityInput.addEventListener('input', updateWeightedValue);
+    updateWeightedValue();
+    
+    // Dynamic product formset
+    const productFormset = document.getElementById('product-formset');
+    const addButton = document.getElementById('addProduct');
+    const totalFormsInput = document.querySelector('[name="leadproduct_set-TOTAL_FORMS"]');
+    
+    addButton.addEventListener('click', function() {
+        const formNum = parseInt(totalFormsInput.value);
+        const newForm = document.querySelector('.product-form').cloneNode(true);
+        
+        // Update form field names and IDs
+        newForm.innerHTML = newForm.innerHTML.replace(/-\d+-/g, `-${formNum}-`);
+        
+        // Clear values
+        newForm.querySelectorAll('input, select, textarea').forEach(field => {
+            if (field.type !== 'hidden') {
+                field.value = '';
+            }
+        });
+        
+        productFormset.appendChild(newForm);
+        totalFormsInput.value = formNum + 1;
+        
+        // Re-initialize Select2 for new form
+        $(newForm).find('.select2-dropdown').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+    });
+    
+    // Remove product
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-product') || e.target.closest('.remove-product')) {
+            e.preventDefault();
+            const productForm = e.target.closest('.product-form');
+            productForm.remove();
+            
+            // Update total forms count
+            const forms = document.querySelectorAll('.product-form');
+            totalFormsInput.value = forms.length;
+        }
+    });
+});
+</script>
+{% endblock %}

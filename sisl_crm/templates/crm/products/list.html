@@ -1,0 +1,200 @@
+<!-- templates/crm/products/list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Products - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3">Products</h1>
+        <p class="text-muted">Total: {{ total_count }} products</p>
+    </div>
+    <div class="col-md-6 text-end">
+        {% if perms.crm.add_product %}
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#syncModal">
+            <i class="fas fa-sync"></i> Sync from Manager.io
+        </button>
+        <a href="{% url 'crm:product_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add Product
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Search by name, model, SKU..." 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="brand" class="form-control">
+                    <option value="">All Brands</option>
+                    {% for brand in brands %}
+                    <option value="{{ brand.id }}" {% if request.GET.brand == brand.id|stringformat:"s" %}selected{% endif %}>
+                        {{ brand.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="category" class="form-control">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="is_mitsubishi" class="form-control">
+                    <option value="">All Sources</option>
+                    <option value="1" {% if request.GET.is_mitsubishi == "1" %}selected{% endif %}>Mitsubishi Only</option>
+                    <option value="0" {% if request.GET.is_mitsubishi == "0" %}selected{% endif %}>Other Brands</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>SKU</th>
+                        <th>Name</th>
+                        <th>Brand</th>
+                        <th>Model</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Source</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.sku|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'crm:product_detail' product.id %}">
+                                {{ product.name }}
+                            </a>
+                        </td>
+                        <td>{{ product.brand.name }}</td>
+                        <td>{{ product.model|default:"-" }}</td>
+                        <td>{{ product.category.name|default:"-" }}</td>
+                        <td>৳ {{ product.price|floatformat:0|default:"-" }}</td>
+                        <td>
+                            {% if product.stock_quantity > 0 %}
+                                <span class="text-success">{{ product.stock_quantity }}</span>
+                            {% else %}
+                                <span class="text-danger">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.is_from_api %}
+                                <span class="badge bg-info">Manager.io</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Manual</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'crm:product_detail' product.id %}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if not product.is_from_api and perms.crm.change_product %}
+                                <a href="#" class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">
+                            No products found. 
+                            {% if perms.crm.add_product %}
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#syncModal">Sync from Manager.io</a> or 
+                            <a href="{% url 'crm:product_create' %}">add manually</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal fade" id="syncModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sync Products from Manager.io</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will fetch all inventory items from Manager.io and update the product database.</p>
+                <p>The sync process may take several minutes depending on the number of products.</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> 
+                    Products from Manager.io will be automatically categorized based on their item codes.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'crm:product_sync_mitsubishi' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Start Sync
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

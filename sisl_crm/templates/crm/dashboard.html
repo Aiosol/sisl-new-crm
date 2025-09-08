@@ -1,0 +1,279 @@
+<!-- templates/crm/dashboard.html - Dashboard Template -->
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h1 class="h3">Dashboard</h1>
+        <p class="text-muted">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card primary h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Total Contacts</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ total_contacts|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-address-book fa-2x text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card success h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Open Leads</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ open_leads|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chart-line fa-2x text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card warning h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Pipeline Value</div>
+                        <div class="h5 mb-0 font-weight-bold">৳ {{ pipeline_value|floatformat:0|default:0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card danger h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-uppercase mb-1">Activities Today</div>
+                        <div class="h5 mb-0 font-weight-bold">{{ activities_today|default:0 }}</div>
+                        {% if activities_overdue > 0 %}
+                        <small class="text-danger">{{ activities_overdue }} overdue</small>
+                        {% endif %}
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-check fa-2x text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Lead Pipeline Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card">
+            <div class="card-header">
+                Lead Pipeline
+            </div>
+            <div class="card-body">
+                <canvas id="pipelineChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="card">
+            <div class="card-header">
+                Top Products
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Leads</th>
+                                <th class="text-center">Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>
+                                    <small>{{ product.product__brand__name }}</small><br>
+                                    {{ product.product__name|truncatechars:30 }}
+                                </td>
+                                <td class="text-center">{{ product.count }}</td>
+                                <td class="text-center">{{ product.total_quantity }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No product data yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Recent Activities -->
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Upcoming Activities</span>
+                <a href="{% url 'crm:activity_create' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus"></i> New
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for activity in recent_activities %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ activity.subject }}</h6>
+                                <p class="mb-1 text-muted small">
+                                    <i class="fas fa-{{ activity.get_activity_type_display|lower }} me-1"></i>
+                                    {{ activity.get_activity_type_display }}
+                                    {% if activity.contact %}
+                                    - {{ activity.contact.name }}
+                                    {% endif %}
+                                </p>
+                                <small class="text-muted">
+                                    <i class="far fa-clock"></i> {{ activity.scheduled_date|date:"M d, H:i" }}
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ activity.priority|default:'medium' }}">
+                                {{ activity.get_priority_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center my-3">No upcoming activities</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Leads -->
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Recent Leads</span>
+                <a href="{% url 'crm:lead_create' %}" class="btn btn-sm btn-success">
+                    <i class="fas fa-plus"></i> New
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Lead</th>
+                                <th>Contact</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lead in recent_leads %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'crm:lead_detail' lead.id %}">
+                                        {{ lead.title|truncatechars:30 }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ lead.lead_number }}</small>
+                                </td>
+                                <td>{{ lead.contact.name }}</td>
+                                <td>৳ {{ lead.estimated_value|floatformat:0|default:"-" }}</td>
+                                <td>
+                                    <span class="badge" style="background-color: {{ lead.status.color }};">
+                                        {{ lead.status.name }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">No leads yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if pending_approvals > 0 %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <div>
+                You have <strong>{{ pending_approvals }}</strong> lead(s) pending approval.
+                <a href="{% url 'crm:lead_list' %}?status=pending_approval" class="alert-link">View pending approvals</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script>
+// Pipeline Chart
+const pipelineData = {{ lead_stages|safe }};
+const ctx = document.getElementById('pipelineChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: pipelineData.map(item => item.name),
+        datasets: [{
+            label: 'Number of Leads',
+            data: pipelineData.map(item => item.count),
+            backgroundColor: pipelineData.map(item => item.color),
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

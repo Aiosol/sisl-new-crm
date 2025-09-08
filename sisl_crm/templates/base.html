@@ -1,0 +1,337 @@
+<!-- templates/base.html - Base Template for SISL CRM -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SISL CRM{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --sidebar-width: 250px;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            background-color: var(--primary-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .sidebar.collapsed {
+            width: 60px;
+        }
+        
+        .sidebar .sidebar-header {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        
+        .sidebar .sidebar-header h3 {
+            color: white;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar ul.components {
+            padding: 20px 0;
+            list-style: none;
+        }
+        
+        .sidebar ul li a {
+            padding: 15px 20px;
+            font-size: 1rem;
+            display: block;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar ul li a:hover,
+        .sidebar ul li.active > a {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar ul li a i {
+            margin-right: 10px;
+            width: 20px;
+        }
+        
+        /* Content */
+        .content {
+            width: calc(100% - var(--sidebar-width));
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+        
+        .sidebar.collapsed + .content {
+            width: calc(100% - 60px);
+            margin-left: 60px;
+        }
+        
+        /* Navbar */
+        .navbar-custom {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            padding: 1rem 2rem;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            border-left: 4px solid;
+            padding: 1rem;
+        }
+        
+        .stat-card.primary {
+            border-left-color: var(--primary-color);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--success-color);
+        }
+        
+        .stat-card.warning {
+            border-left-color: var(--warning-color);
+        }
+        
+        .stat-card.danger {
+            border-left-color: var(--danger-color);
+        }
+        
+        /* Tables */
+        .table-hover tbody tr:hover {
+            background-color: rgba(0,0,0,.02);
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        /* Status Badges */
+        .badge-status {
+            padding: 0.35em 0.65em;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        /* Select2 Custom */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -var(--sidebar-width);
+            }
+            
+            .sidebar.active {
+                margin-left: 0;
+            }
+            
+            .content {
+                width: 100%;
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>SISL CRM</h3>
+        </div>
+        
+        <ul class="components">
+            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'crm:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Dashboard
+                </a>
+            </li>
+            
+            <li class="{% if 'contact' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:contact_list' %}">
+                    <i class="fas fa-address-book"></i>
+                    Contacts
+                </a>
+            </li>
+            
+            <li class="{% if 'company' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:company_list' %}">
+                    <i class="fas fa-building"></i>
+                    Companies
+                </a>
+            </li>
+            
+            <li class="{% if 'lead' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:lead_list' %}">
+                    <i class="fas fa-chart-line"></i>
+                    Leads
+                </a>
+            </li>
+            
+            <li class="{% if 'product' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:product_list' %}">
+                    <i class="fas fa-box"></i>
+                    Products
+                </a>
+            </li>
+            
+            <li class="{% if 'activity' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:activity_list' %}">
+                    <i class="fas fa-calendar-check"></i>
+                    Activities
+                </a>
+            </li>
+            
+            <li class="{% if 'stakeholder' in request.resolver_match.url_name %}active{% endif %}">
+                <a href="{% url 'crm:stakeholder_list' %}">
+                    <i class="fas fa-handshake"></i>
+                    Stakeholders
+                </a>
+            </li>
+            
+            {% if user.is_staff %}
+            <li>
+                <a href="{% url 'admin:index' %}">
+                    <i class="fas fa-cog"></i>
+                    Admin
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    
+    <!-- Page Content -->
+    <div class="content">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-custom">
+            <div class="container-fluid">
+                <button type="button" id="sidebarCollapse" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-bars"></i>
+                </button>
+                
+                <div class="ms-auto d-flex align-items-center">
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user"></i> {{ user.get_full_name|default:user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'password_change' %}">Change Password</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Messages -->
+        {% if messages %}
+        <div class="container-fluid mt-3">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Main Content -->
+        <main class="container-fluid py-4">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <!-- Main JS -->
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2
+            $('.select2-dropdown').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+            
+            $('.select2-multiple').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                multiple: true
+            });
+            
+            // Sidebar toggle
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('collapsed');
+            });
+            
+            // Mobile sidebar toggle
+            if ($(window).width() <= 768) {
+                $('#sidebar').addClass('collapsed');
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

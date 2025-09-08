@@ -1,0 +1,169 @@
+<!-- templates/crm/contacts/form.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} Contact - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3">{% if object %}Edit Contact{% else %}New Contact{% endif %}</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'crm:dashboard' %}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'crm:contact_list' %}">Contacts</a></li>
+                <li class="breadcrumb-item active">{% if object %}Edit{% else %}New{% endif %}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<form method="post" class="needs-validation" novalidate>
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Contact Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.name|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.phone|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.linkedin|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.current_company|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.designation|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.contact_type|as_crispy_field }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.status|as_crispy_field }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.address|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Additional Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.product_interests|as_crispy_field }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.reference_source|as_crispy_field }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.notes|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Actions</h6>
+                    <button type="submit" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-save"></i> Save Contact
+                    </button>
+                    <a href="{% if object %}{% url 'crm:contact_detail' object.id %}{% else %}{% url 'crm:contact_list' %}{% endif %}" 
+                       class="btn btn-secondary w-100">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+            
+            {% if form.errors %}
+            <div class="alert alert-danger">
+                <h6 class="alert-heading">Please correct the errors below:</h6>
+                <ul class="mb-0">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</form>
+
+<script>
+// Check for duplicate contacts
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.querySelector('input[name="phone"]');
+    const emailInput = document.querySelector('input[name="email"]');
+    let checkTimeout;
+    
+    function checkDuplicates() {
+        clearTimeout(checkTimeout);
+        checkTimeout = setTimeout(() => {
+            const phone = phoneInput.value;
+            const email = emailInput.value;
+            
+            if (phone || email) {
+                fetch("{% url 'crm:api_contact_duplicate' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: `phone=${encodeURIComponent(phone)}&email=${encodeURIComponent(email)}{% if object %}&exclude_id={{ object.id }}{% endif %}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.duplicates && data.duplicates.length > 0) {
+                        // Show warning about duplicates
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-warning alert-dismissible fade show mt-3';
+                        alert.innerHTML = `
+                            <strong>Possible duplicates found:</strong>
+                            <ul>
+                                ${data.duplicates.map(d => `<li>${d.name} - ${d.company || 'No Company'} (${d.phone})</li>`).join('')}
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        phoneInput.parentElement.appendChild(alert);
+                    }
+                });
+            }
+        }, 500);
+    }
+    
+    phoneInput.addEventListener('input', checkDuplicates);
+    emailInput.addEventListener('input', checkDuplicates);
+});
+</script>
+{% endblock %}

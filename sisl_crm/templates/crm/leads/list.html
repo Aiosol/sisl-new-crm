@@ -1,0 +1,148 @@
+<!-- templates/crm/leads/list.html -->
+{% extends 'base.html' %}
+
+{% block title %}Leads - SISL CRM{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h1 class="h3">Leads</h1>
+        <p class="text-muted">
+            Total: {{ total_count }} leads | 
+            Value: ৳ {{ total_value|floatformat:0 }} | 
+            Weighted: ৳ {{ weighted_value|floatformat:0 }}
+        </p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'crm:lead_pipeline' %}" class="btn btn-secondary">
+            <i class="fas fa-columns"></i> Pipeline View
+        </a>
+        <a href="{% url 'crm:lead_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> New Lead
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                {{ search_form.search }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.status }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.owner }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.date_from }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.date_to }}
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Leads Table -->
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Lead #</th>
+                        <th>Title</th>
+                        <th>Contact</th>
+                        <th>Company</th>
+                        <th>Status</th>
+                        <th>Value</th>
+                        <th>Probability</th>
+                        <th>Owner</th>
+                        <th>Created</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in leads %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'crm:lead_detail' lead.id %}">
+                                {{ lead.lead_number }}
+                            </a>
+                        </td>
+                        <td>{{ lead.title|truncatechars:40 }}</td>
+                        <td>{{ lead.contact.name }}</td>
+                        <td>{{ lead.company.name|default:"-" }}</td>
+                        <td>
+                            <span class="badge" style="background-color: {{ lead.status.color }};">
+                                {{ lead.status.name }}
+                            </span>
+                            {% if lead.requires_approval and not lead.approved_by %}
+                            <span class="badge bg-warning">Pending Approval</span>
+                            {% endif %}
+                        </td>
+                        <td>৳ {{ lead.estimated_value|floatformat:0|default:"-" }}</td>
+                        <td>{{ lead.probability }}%</td>
+                        <td>{{ lead.owner.get_full_name|default:lead.owner.username }}</td>
+                        <td>{{ lead.created_at|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'crm:lead_update' lead.id %}" 
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'crm:activity_create' %}?lead={{ lead.id }}" 
+                                   class="btn btn-outline-info" title="Add Activity">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">
+                            No leads found. <a href="{% url 'crm:lead_create' %}">Create your first lead</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
